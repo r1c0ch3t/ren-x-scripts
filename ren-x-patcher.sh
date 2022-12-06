@@ -1,6 +1,7 @@
 #!/bin/bash
 
-RENX_INSTALL_PATH="$HOME/Games/Renegade X/"
+: ${RENX_INSTALL_PATH:="$HOME/Games/Renegade X/"}
+: ${MAX_PARALLEL:=4}
 
 get_best_mirror(){
 	(
@@ -13,23 +14,48 @@ get_best_mirror(){
 		wait
 	) | sort -n | tail -1 | awk '{print $2}'
 }
+
 patch_full(){
-	if wget -np -nH -N -R index.html -e robots=off "${best_mirror}${patch_path}/full/${newhash}" -P "${RENX_INSTALL_PATH}${patch_path}/full/"; then
-		xdelta3 -d -f "${RENX_INSTALL_PATH}${patch_path}/full/${newhash}"  "${RENX_INSTALL_PATH}${full_path}"
-		printf "Full\n"
+	if wget -q -np -nH -N -R index.html -e robots=off "$1$2/full/$4" -P "${RENX_INSTALL_PATH}$2/full/"; then
+		xdelta3 -d -f "${RENX_INSTALL_PATH}$2/full/$4"  "${RENX_INSTALL_PATH}$3"
+		printf "Full"
 	else
-		printf "\e[1mDOWNLOAD FAILED\n\e[0m"
+		printf "DOWNLOAD FAILED"
 	fi
 }
 patch_delta(){
-	if wget -np -nH -N -R index.html -e robots=off "${best_mirror}${patch_path}/delta/${newhash}_from_${oldhash}" -P "$RENX_INSTALL_PATH$patch_path/delta/"; then
-		mkdir -p "$(dirname "${RENX_INSTALL_PATH}${patch_path}/patch/${full_path}")"
-		xdelta3 -d -f -n -s "${RENX_INSTALL_PATH}${full_path}" "${RENX_INSTALL_PATH}${patch_path}/delta/${newhash}_from_${oldhash}" "${RENX_INSTALL_PATH}${patch_path}/patch/${full_path}"
-		mv -f "${RENX_INSTALL_PATH}${patch_path}/patch/${full_path}" "${RENX_INSTALL_PATH}${full_path}"
-		printf "Delta\n"
+	if wget -q -np -nH -N -R index.html -e robots=off "$1$2/delta/$4_from_$5" -P "${RENX_INSTALL_PATH}$2/delta/"; then
+		mkdir -p "$(dirname "${RENX_INSTALL_PATH}$2/patch/$3")"
+		xdelta3 -d -f -n -s "${RENX_INSTALL_PATH}$3" "${RENX_INSTALL_PATH}$2/delta/$4_from_$5" "${RENX_INSTALL_PATH}$2/patch/$3"
+		mv -f "${RENX_INSTALL_PATH}$2/patch/$3" "${RENX_INSTALL_PATH}$3"
+		printf "Delta"
 	else
-		patch_full		
+		patch_full $1 $2 $3 $4		
 	fi
+}
+
+download_file(){
+	full_path="$(jq -r '.Path' <<< ${1//\\\\//})"
+	mkdir -p "$(dirname "${RENX_INSTALL_PATH}${full_path}")"	
+	oldhash=$(jq -r '.OldHash' <<< $1)
+	newhash=$(jq -r '.NewHash' <<< $1)
+	sha=$([ -f "${RENX_INSTALL_PATH}${full_path}" ] && sha256sum "${RENX_INSTALL_PATH}${full_path}" | awk '{print $1}')
+	if [ "${newhash}" != "${sha^^}" ]; then
+		if [ "${newhash}" != "null" ]; then
+			if [ "${oldhash}" != "${sha^^}" ]; then
+				result=$(patch_full ${best_mirror} ${patch_path} ${full_path} ${newhash})
+			else
+				result=$(patch_delta ${best_mirror} ${patch_path} ${full_path} ${newhash} ${oldhash})
+			fi
+		else
+			[ -f "${RENX_INSTALL_PATH}${full_path}" ] && rm "${RENX_INSTALL_PATH}${full_path}"
+			result="Removed"
+		fi
+	else
+		result="Verified"
+	fi
+	printf '%*s\r%s\n' "$(tput cols)" "${result}" "${full_path}"
+	wait
 }
 
 release_json=$(curl -s 'https://static.ren-x.com/launcher_data/version/release.json')
@@ -39,26 +65,11 @@ instructions_json=$(curl -s "${best_mirror}${patch_path}/instructions.json")
 
 for file in $(jq -c '.[]' <<< ${instructions_json})
 do
-	full_path="$(jq -r '.Path' <<< ${file//\\\\//})"
-	mkdir -p "$(dirname "${RENX_INSTALL_PATH}${full_path}")"	
-	oldhash=$(jq -r '.OldHash' <<< ${file})
-	newhash=$(jq -r '.NewHash' <<< ${file})
-	sha=$(sha256sum "${RENX_INSTALL_PATH}${full_path}" | awk '{print $1}'s)
-	printf "\e[1m${RENX_INSTALL_PATH}${full_path}\n\e[0m"
-	if [ "${newhash}" != "${sha^^}" ]; then
-		if [ "${newhash}" != "null" ]; then
-			if [ "${oldhash}" != "${sha^^}" ]; then
-				patch_full
-			else
-				patch_delta
-			fi
-		else
-			rm "${RENX_INSTALL_PATH}${full_path}"
-			printf "Removed\n"
-		fi
-	else
-		printf "Verified\n"
-	fi
+	((i=i%${MAX_PARALLEL})); ((i++==0)) && wait
+	download_file ${file} & 
 done
-printf "\e[1mDelete downloaded patch files? (${RENX_INSTALL_PATH}${patch_path})\n\e[0m"
-rm -rI "${RENX_INSTALL_PATH}${patch_path}"
+wait
+[ -d "${RENX_INSTALL_PATH}${patch_path}" ] && {
+	printf "Delete downloaded patch files? (${RENX_INSTALL_PATH}${patch_path})\n";
+	rm -rI "${RENX_INSTALL_PATH}${patch_path}";
+}
