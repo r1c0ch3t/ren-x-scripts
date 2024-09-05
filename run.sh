@@ -1,11 +1,11 @@
 #!/bin/bash
 
-: ${RENX_INSTALL_PATH:="$HOME/Games/Renegade X/"}
-: ${STEAM_INSTALL_PATH:="$HOME/.local/share/Steam"}
-: ${COMPAT_DATA_PATH:="${RENX_INSTALL_PATH}/.proton"}
+: "${RENX_INSTALL_PATH:="$HOME/Games/Renegade X/"}"
+: "${STEAM_INSTALL_PATH:="$HOME/.local/share/Steam"}"
+: "${COMPAT_DATA_PATH:="${RENX_INSTALL_PATH}/.proton"}"
 mkdir -p "${COMPAT_DATA_PATH}"
 
-DEF_CMD=("${RENX_INSTALL_PATH}/Binaries/Win64/UDK.exe" $@ "-nomovies" "-useallavailablecores")
+DEF_CMD=("${RENX_INSTALL_PATH}/Binaries/Win64/UDK.exe" "$@" "-nomovies" "-useallavailablecores")
 STEAM_COMPAT_DATA_PATH="${COMPAT_DATA_PATH}" \
 STEAM_COMPAT_CLIENT_INSTALL_PATH="${STEAM_INSTALL_PATH}" \
 SteamAppId="13260" \
