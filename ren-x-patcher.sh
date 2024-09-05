@@ -69,4 +69,3 @@ do
 	((i=i%MAX_PARALLEL)); ((i++==0)) && wait
 	download_file "${file}" & 
 done
-wait
