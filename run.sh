@@ -12,4 +12,4 @@ SteamAppId="13260" \
 PROTON_NO_ESYNC=1 \
 PROTON_NO_GLSL=1 \
 PROTON_USE_D9VK=1 \
-"${STEAM_INSTALL_PATH}/steamapps/common/Proton - Experimental/proton" run "${DEF_CMD[@]}"
+"${STEAM_INSTALL_PATH}/steamapps/common/Proton 8.0/proton" run "${DEF_CMD[@]}"

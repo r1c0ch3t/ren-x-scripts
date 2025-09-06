@@ -62,7 +62,7 @@ release_json=$(curl -s 'http://version.totemarts.services/launcher_data/version/
 patch_path=$(jq -r '.game.patch_path' <<< "${release_json}")
 best_mirror="$(get_best_mirror "${release_json}")"
 instructions_json=$(curl -s "${best_mirror}${patch_path}/instructions.json")
-TMP_DIR="/tmp/RenX/"
+TMP_DIR="/var/tmp/RenX/"
 
 for file in $(jq -c '.[]' <<< "${instructions_json}")
 do

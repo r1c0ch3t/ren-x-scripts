@@ -18,6 +18,6 @@ These should be available in your distro's repositories.
 
 ## [run.sh](https://github.com/r1c0ch3t/ren-x-scripts/blob/main/run.sh)
 
-Launches the game using Proton Experimental. You need to install it via Steam.
+Launches the game using Proton 8. You need to [install](steam://launch/2348590) it via Steam.
 
 You might also need [d3dcompiler_47.dll](https://lutris.net/files/tools/dll/d3dcompiler_47.dll) to compile shaders on first launch. Put it in **Renegade X/Binaries/Win64** folder.
