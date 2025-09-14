@@ -25,7 +25,7 @@ patch_full(){
 }
 patch_delta(){
 	if wget -q -np -nH -N -R index.html -e robots=off "$1$2/delta/$4_from_$5" -P "${TMP_DIR}$2/delta/"; then
-		mkdir -p "$(dirname "${RENX_INSTALL_PATH}$2/patch/$3")"
+		mkdir -p "$(dirname "${TMP_DIR}$2/patch/$3")"
 		xdelta3 -d -f -n -s "${RENX_INSTALL_PATH}$3" "${TMP_DIR}$2/delta/$4_from_$5" "${TMP_DIR}$2/patch/$3"
 		mv -f "${TMP_DIR}$2/patch/$3" "${RENX_INSTALL_PATH}$3"
 		printf "Delta"
